@@ -1,0 +1,250 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Assessment</title>
+  <style>
+    *, *::before, *::after {
+      box-sizing: border-box;
+      margin: 0;
+      padding: 0;
+    }
+
+    body {
+      min-height: 100vh;
+      background: #edf2f7;
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      justify-content: center;
+      font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Helvetica, Arial, sans-serif;
+      padding: 1.5rem;
+      color: #3a4a5c;
+    }
+
+    .card {
+      width: 100%;
+      max-width: 700px;
+    }
+
+    .scale-header {
+      display: grid;
+      grid-template-columns: 160px repeat(5, 1fr);
+      gap: 0.5rem;
+      margin-bottom: 0.6rem;
+      padding: 0 0.1rem;
+    }
+
+    .scale-header-spacer { /* fills the label column */ }
+
+    .scale-label {
+      text-align: center;
+      font-size: 0.7rem;
+      font-weight: 700;
+      color: #b8c8d8;
+      letter-spacing: 0.05em;
+      text-transform: uppercase;
+    }
+
+    .grid {
+      display: flex;
+      flex-direction: column;
+      gap: 0.55rem;
+    }
+
+    .row {
+      display: grid;
+      grid-template-columns: 160px repeat(5, 1fr);
+      gap: 0.5rem;
+      align-items: center;
+    }
+
+    .row-label {
+      font-size: 0.875rem;
+      color: #556070;
+      font-weight: 500;
+      padding-right: 0.75rem;
+      line-height: 1.35;
+    }
+
+    .cell {
+      aspect-ratio: 1 / 1;
+      border: 2px solid #dce8f0;
+      border-radius: 12px;
+      background: #f8fbfd;
+      cursor: pointer;
+      transition:
+        border-color 0.2s ease,
+        background 0.2s ease,
+        box-shadow 0.2s ease,
+        transform 0.13s ease;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      -webkit-tap-highlight-color: transparent;
+      user-select: none;
+      outline: none;
+    }
+
+    .cell:hover {
+      border-color: #8dc8dc;
+      background: #eef7fb;
+    }
+
+    .cell:focus-visible {
+      border-color: #5aabbf;
+      outline: 2px solid #5aabbf;
+      outline-offset: 2px;
+    }
+
+    .cell:active {
+      transform: scale(0.93);
+    }
+
+    .cell.selected {
+      border-color: #4fa8c0;
+      background: #4fa8c0;
+    }
+
+    .cell.selected:hover {
+      background: #44a0b8;
+      border-color: #44a0b8;
+    }
+
+    /* Divider between rows for readability */
+    .row + .row {
+      padding-top: 0.1rem;
+    }
+
+    @media (max-width: 540px) {
+      .card {
+        padding: 1.75rem 1.1rem;
+        border-radius: 16px;
+      }
+
+      .row,
+      .scale-header {
+        grid-template-columns: 80px repeat(5, 1fr);
+        gap: 0.3rem;
+      }
+
+      .row-label {
+        font-size: 0.75rem;
+        padding-right: 0.3rem;
+      }
+
+      .scale-label {
+        font-size: 0.62rem;
+      }
+
+      .cell {
+        border-radius: 9px;
+      }
+    }
+  </style>
+</head>
+<body>
+
+  <div class="card">
+    <div class="grid" id="grid"></div>
+  </div>
+
+  <script>
+    const ROW_LABELS = [
+      'Shelter',
+      'Transportation',
+      'Water and Food',
+      'Safety and Security',
+      'Health and Wellbeing',
+    ];
+
+    const COLS = 5;
+    const selections = {};
+
+    const grid = document.getElementById('grid');
+
+    ROW_LABELS.forEach((label, rowIdx) => {
+      const row = document.createElement('div');
+      row.className = 'row';
+      row.setAttribute('role', 'radiogroup');
+      row.setAttribute('aria-label', label);
+
+      const labelEl = document.createElement('div');
+      labelEl.className = 'row-label';
+      labelEl.textContent = label;
+      row.appendChild(labelEl);
+
+      for (let col = 0; col < COLS; col++) {
+        const cell = document.createElement('div');
+        cell.className = 'cell';
+        cell.setAttribute('role', 'radio');
+        cell.setAttribute('aria-checked', 'false');
+        cell.setAttribute('aria-label', `${label}, option ${col + 1}`);
+        cell.setAttribute('tabindex', col === 0 ? '0' : '-1');
+        cell.dataset.row = rowIdx;
+        cell.dataset.col = col;
+
+        cell.addEventListener('click', () => handleSelect(rowIdx, col));
+        cell.addEventListener('keydown', (e) => {
+          if (e.key === 'Enter' || e.key === ' ') {
+            e.preventDefault();
+            handleSelect(rowIdx, col);
+          }
+          if (e.key === 'ArrowRight') {
+            e.preventDefault();
+            focusCell(rowIdx, Math.min(col + 1, COLS - 1));
+          }
+          if (e.key === 'ArrowLeft') {
+            e.preventDefault();
+            focusCell(rowIdx, Math.max(col - 1, 0));
+          }
+        });
+
+        row.appendChild(cell);
+      }
+
+      grid.appendChild(row);
+    });
+
+    function getCell(rowIdx, colIdx) {
+      return grid.querySelector(`[data-row="${rowIdx}"][data-col="${colIdx}"]`);
+    }
+
+    function focusCell(rowIdx, colIdx) {
+      const cell = getCell(rowIdx, colIdx);
+      if (cell) cell.focus();
+    }
+
+    function handleSelect(rowIdx, colIdx) {
+      const prev = selections[rowIdx];
+
+      if (prev !== undefined) {
+        const prevCell = getCell(rowIdx, prev);
+        if (prevCell) {
+          prevCell.classList.remove('selected');
+          prevCell.setAttribute('aria-checked', 'false');
+          prevCell.setAttribute('tabindex', '-1');
+        }
+      }
+
+      // Clicking the same cell again deselects it
+      if (prev === colIdx) {
+        delete selections[rowIdx];
+        const cell = getCell(rowIdx, colIdx);
+        if (cell) cell.setAttribute('tabindex', '0');
+        return;
+      }
+
+      selections[rowIdx] = colIdx;
+      const cell = getCell(rowIdx, colIdx);
+      if (cell) {
+        cell.classList.add('selected');
+        cell.setAttribute('aria-checked', 'true');
+        cell.setAttribute('tabindex', '0');
+      }
+    }
+  </script>
+
+</body>
+</html>
