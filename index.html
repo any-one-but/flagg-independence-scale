@@ -92,6 +92,20 @@
       background: #8c6248;
     }
 
+    .cell-wrap {
+      display: flex;
+      flex-direction: column;
+      gap: 0.4rem;
+    }
+
+    .cell-caption {
+      font-size: 0.68rem;
+      line-height: 1.25;
+      color: #6f6052;
+      text-align: center;
+      letter-spacing: 0.01em;
+    }
+
     .score {
       margin-top: 2.5rem;
       font-size: 1.1rem;
@@ -117,6 +131,9 @@
       .category {
         margin-bottom: 1.75rem;
       }
+      .cell-caption {
+        font-size: 0.6rem;
+      }
     }
   </style>
 </head>
@@ -129,12 +146,27 @@
   </div>
 
   <script>
-    const ROW_LABELS = [
-      'Shelter',
-      'Transportation',
-      'Water and Food',
-      'Safety and Security',
-      'Health and Wellbeing',
+    const ROWS = [
+      {
+        label: 'Shelter',
+        options: ['No Shelter', 'Shelter', 'Heated', 'Privacy', 'Stability'],
+      },
+      {
+        label: 'Transportation',
+        options: ['No Transport', 'Public Transit', 'Control', 'Distance', 'Independence'],
+      },
+      {
+        label: 'Water and Food',
+        options: ['No Water', 'Clean Water', 'Some Food', 'Enough Food', 'Healthy Food'],
+      },
+      {
+        label: 'Safety and Security',
+        options: ['Mortal Danger', 'Physical Danger', 'Dangerous Location', 'No Emergency Savings', 'Safety'],
+      },
+      {
+        label: 'Health and Wellbeing',
+        options: ['No Emergency Access', 'Communication', 'Vital Medications', 'All Medications', 'Full Healthcare'],
+      },
     ];
 
     const COLS = 5;
@@ -145,7 +177,7 @@
     const scoreEl = document.getElementById('score');
     const scoreValueEl = document.getElementById('score-value');
 
-    ROW_LABELS.forEach((label, rowIdx) => {
+    ROWS.forEach(({ label, options }, rowIdx) => {
       const category = document.createElement('div');
       category.className = 'category';
       category.setAttribute('role', 'radiogroup');
@@ -160,11 +192,16 @@
       cells.className = 'cells';
 
       for (let col = 0; col < COLS; col++) {
+        const caption = options[col] || '';
+
+        const wrap = document.createElement('div');
+        wrap.className = 'cell-wrap';
+
         const cell = document.createElement('div');
         cell.className = 'cell';
         cell.setAttribute('role', 'radio');
         cell.setAttribute('aria-checked', 'false');
-        cell.setAttribute('aria-label', `${label}, option ${col + 1}`);
+        cell.setAttribute('aria-label', `${label}: ${caption}`);
         cell.setAttribute('tabindex', col === 0 ? '0' : '-1');
         cell.dataset.row = rowIdx;
         cell.dataset.col = col;
@@ -185,7 +222,13 @@
           }
         });
 
-        cells.appendChild(cell);
+        const captionEl = document.createElement('div');
+        captionEl.className = 'cell-caption';
+        captionEl.textContent = caption;
+
+        wrap.appendChild(cell);
+        wrap.appendChild(captionEl);
+        cells.appendChild(wrap);
       }
 
       category.appendChild(cells);
