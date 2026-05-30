@@ -172,7 +172,7 @@
       <p class="page-description">Click or tap the option in each row that best describes your independence in that area.</p>
     </header>
     <div class="score" id="score">
-      <span class="score-value" id="score-value">0</span> / 25
+      <span class="score-value" id="score-value">0</span> / 25 <span id="score-pct"></span>
     </div>
     <p class="copyright">© 2022 Nancy N. Flagg. All Rights Reserved.</p>
   </div>
@@ -208,6 +208,7 @@
     const wrapper = document.getElementById('wrapper');
     const scoreEl = document.getElementById('score');
     const scoreValueEl = document.getElementById('score-value');
+    const scorePctEl = document.getElementById('score-pct');
 
     ROWS.forEach(({ label, options }, rowIdx) => {
       const category = document.createElement('div');
@@ -310,6 +311,7 @@
       const total = Object.values(selections).reduce((sum, col) => sum + (col + 1), 0);
       const hasAny = Object.keys(selections).length > 0;
       scoreValueEl.textContent = total;
+      scorePctEl.textContent = hasAny ? `(${Math.round(total / MAX_SCORE * 100)}%)` : '';
       scoreEl.classList.toggle('visible', hasAny);
     }
   </script>
