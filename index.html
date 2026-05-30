@@ -13,72 +13,53 @@
 
     body {
       min-height: 100vh;
-      background: #edf2f7;
+      background: #e9e2d8;
       display: flex;
-      flex-direction: column;
       align-items: center;
       justify-content: center;
       font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Helvetica, Arial, sans-serif;
-      padding: 1.5rem;
-      color: #3a4a5c;
+      padding: 3rem 1.5rem;
+      color: #2e2318;
     }
 
-    .card {
+    .wrapper {
       width: 100%;
-      max-width: 700px;
+      max-width: 560px;
     }
 
-    .scale-header {
-      display: grid;
-      grid-template-columns: 160px repeat(5, 1fr);
-      gap: 0.5rem;
-      margin-bottom: 0.6rem;
-      padding: 0 0.1rem;
+    .category {
+      margin-bottom: 2.25rem;
     }
 
-    .scale-header-spacer { /* fills the label column */ }
-
-    .scale-label {
-      text-align: center;
-      font-size: 0.7rem;
-      font-weight: 700;
-      color: #b8c8d8;
-      letter-spacing: 0.05em;
-      text-transform: uppercase;
-    }
-
-    .grid {
-      display: flex;
-      flex-direction: column;
-      gap: 0.55rem;
-    }
-
-    .row {
-      display: grid;
-      grid-template-columns: 160px repeat(5, 1fr);
-      gap: 0.5rem;
-      align-items: center;
+    .category:last-child {
+      margin-bottom: 0;
     }
 
     .row-label {
-      font-size: 0.875rem;
-      color: #556070;
+      font-size: 0.8rem;
       font-weight: 500;
-      padding-right: 0.75rem;
-      line-height: 1.35;
+      color: #8a7868;
+      letter-spacing: 0.06em;
+      text-transform: uppercase;
+      margin-bottom: 0.6rem;
+    }
+
+    .cells {
+      display: grid;
+      grid-template-columns: repeat(5, 1fr);
+      gap: 0.45rem;
     }
 
     .cell {
       aspect-ratio: 1 / 1;
-      border: 2px solid #dce8f0;
-      border-radius: 12px;
-      background: #f8fbfd;
+      border: 1.5px solid #c2b8ac;
+      border-radius: 6px;
+      background: transparent;
       cursor: pointer;
       transition:
-        border-color 0.2s ease,
-        background 0.2s ease,
-        box-shadow 0.2s ease,
-        transform 0.13s ease;
+        border-color 0.18s ease,
+        background 0.18s ease,
+        transform 0.12s ease;
       display: flex;
       align-items: center;
       justify-content: center;
@@ -88,66 +69,63 @@
     }
 
     .cell:hover {
-      border-color: #8dc8dc;
-      background: #eef7fb;
+      border-color: #9e7055;
+      background: rgba(158, 112, 85, 0.07);
     }
 
     .cell:focus-visible {
-      border-color: #5aabbf;
-      outline: 2px solid #5aabbf;
+      outline: 2px solid #9e7055;
       outline-offset: 2px;
     }
 
     .cell:active {
-      transform: scale(0.93);
+      transform: scale(0.94);
     }
 
     .cell.selected {
-      border-color: #4fa8c0;
-      background: #4fa8c0;
+      border-color: #9e7055;
+      background: #9e7055;
     }
 
     .cell.selected:hover {
-      background: #44a0b8;
-      border-color: #44a0b8;
+      border-color: #8c6248;
+      background: #8c6248;
     }
 
-    /* Divider between rows for readability */
-    .row + .row {
-      padding-top: 0.1rem;
+    .score {
+      margin-top: 2.5rem;
+      font-size: 1.1rem;
+      color: #8a7868;
+      letter-spacing: 0.03em;
+      opacity: 0;
+      transition: opacity 0.3s ease;
     }
 
-    @media (max-width: 540px) {
-      .card {
-        padding: 1.75rem 1.1rem;
-        border-radius: 16px;
-      }
+    .score.visible {
+      opacity: 1;
+    }
 
-      .row,
-      .scale-header {
-        grid-template-columns: 80px repeat(5, 1fr);
+    .score-value {
+      color: #2e2318;
+      font-weight: 500;
+    }
+
+    @media (max-width: 420px) {
+      .cells {
         gap: 0.3rem;
       }
-
-      .row-label {
-        font-size: 0.75rem;
-        padding-right: 0.3rem;
-      }
-
-      .scale-label {
-        font-size: 0.62rem;
-      }
-
-      .cell {
-        border-radius: 9px;
+      .category {
+        margin-bottom: 1.75rem;
       }
     }
   </style>
 </head>
 <body>
 
-  <div class="card">
-    <div class="grid" id="grid"></div>
+  <div class="wrapper" id="wrapper">
+    <div class="score" id="score">
+      <span class="score-value" id="score-value">0</span> / 25
+    </div>
   </div>
 
   <script>
@@ -160,20 +138,26 @@
     ];
 
     const COLS = 5;
+    const MAX_SCORE = 25;
     const selections = {};
 
-    const grid = document.getElementById('grid');
+    const wrapper = document.getElementById('wrapper');
+    const scoreEl = document.getElementById('score');
+    const scoreValueEl = document.getElementById('score-value');
 
     ROW_LABELS.forEach((label, rowIdx) => {
-      const row = document.createElement('div');
-      row.className = 'row';
-      row.setAttribute('role', 'radiogroup');
-      row.setAttribute('aria-label', label);
+      const category = document.createElement('div');
+      category.className = 'category';
+      category.setAttribute('role', 'radiogroup');
+      category.setAttribute('aria-label', label);
 
       const labelEl = document.createElement('div');
       labelEl.className = 'row-label';
       labelEl.textContent = label;
-      row.appendChild(labelEl);
+      category.appendChild(labelEl);
+
+      const cells = document.createElement('div');
+      cells.className = 'cells';
 
       for (let col = 0; col < COLS; col++) {
         const cell = document.createElement('div');
@@ -201,14 +185,15 @@
           }
         });
 
-        row.appendChild(cell);
+        cells.appendChild(cell);
       }
 
-      grid.appendChild(row);
+      category.appendChild(cells);
+      wrapper.insertBefore(category, scoreEl);
     });
 
     function getCell(rowIdx, colIdx) {
-      return grid.querySelector(`[data-row="${rowIdx}"][data-col="${colIdx}"]`);
+      return wrapper.querySelector(`[data-row="${rowIdx}"][data-col="${colIdx}"]`);
     }
 
     function focusCell(rowIdx, colIdx) {
@@ -228,11 +213,11 @@
         }
       }
 
-      // Clicking the same cell again deselects it
       if (prev === colIdx) {
         delete selections[rowIdx];
         const cell = getCell(rowIdx, colIdx);
         if (cell) cell.setAttribute('tabindex', '0');
+        updateScore();
         return;
       }
 
@@ -243,6 +228,14 @@
         cell.setAttribute('aria-checked', 'true');
         cell.setAttribute('tabindex', '0');
       }
+      updateScore();
+    }
+
+    function updateScore() {
+      const total = Object.values(selections).reduce((sum, col) => sum + (col + 1), 0);
+      const hasAny = Object.keys(selections).length > 0;
+      scoreValueEl.textContent = total;
+      scoreEl.classList.toggle('visible', hasAny);
     }
   </script>
 
