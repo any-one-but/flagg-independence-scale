@@ -73,9 +73,7 @@
     }
 
     .cell {
-      height: 100%;
-      min-height: 4.75rem;
-      padding: 0.5rem 0.4rem;
+      aspect-ratio: 2 / 1;
       border: 1.5px solid #c2b8ac;
       border-radius: 6px;
       background: transparent;
@@ -116,23 +114,31 @@
       background: #8c6248;
     }
 
-    .cell-text {
+    .cell-number {
       font-family: 'EB Garamond', Georgia, serif;
-      font-size: 0.95rem;
+      font-size: 1.3rem;
       color: #c8723a;
       transition: color 0.18s ease;
-      line-height: 1.2;
-      text-align: center;
+      line-height: 1;
       user-select: none;
     }
 
-    .cell.selected .cell-text {
+    .cell.selected .cell-number {
       color: #e9e2d8;
     }
 
     .cell-wrap {
       display: flex;
       flex-direction: column;
+      gap: 0.4rem;
+    }
+
+    .cell-caption {
+      font-size: 0.68rem;
+      line-height: 1.25;
+      color: #6f6052;
+      text-align: center;
+      letter-spacing: 0.01em;
     }
 
     .score {
@@ -168,8 +174,8 @@
       .category {
         margin-bottom: 1.75rem;
       }
-      .cell-text {
-        font-size: 0.8rem;
+      .cell-caption {
+        font-size: 0.6rem;
       }
     }
   </style>
@@ -249,10 +255,10 @@
         cell.dataset.row = rowIdx;
         cell.dataset.col = col;
 
-        const textEl = document.createElement('span');
-        textEl.className = 'cell-text';
-        textEl.textContent = caption;
-        cell.appendChild(textEl);
+        const numEl = document.createElement('span');
+        numEl.className = 'cell-number';
+        numEl.textContent = col + 1;
+        cell.appendChild(numEl);
 
         cell.addEventListener('click', () => handleSelect(rowIdx, col));
         cell.addEventListener('keydown', (e) => {
@@ -270,7 +276,12 @@
           }
         });
 
+        const captionEl = document.createElement('div');
+        captionEl.className = 'cell-caption';
+        captionEl.textContent = caption;
+
         wrap.appendChild(cell);
+        wrap.appendChild(captionEl);
         cells.appendChild(wrap);
       }
 
