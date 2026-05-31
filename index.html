@@ -32,6 +32,35 @@
 
     .page-header {
       margin-bottom: 2.5rem;
+      display: flex;
+      align-items: flex-start;
+      justify-content: space-between;
+      gap: 1.25rem;
+    }
+
+    .header-text {
+      min-width: 0;
+    }
+
+    .mini-grid {
+      flex: none;
+      width: 88px;
+      aspect-ratio: 1 / 1;
+      display: grid;
+      grid-template-columns: repeat(5, 1fr);
+      grid-template-rows: repeat(5, 1fr);
+      gap: 1.5px;
+      background: #000000;
+      border: 1.5px solid #000000;
+    }
+
+    .mini-cell {
+      background: #ffffff;
+      transition: background 0.18s ease;
+    }
+
+    .mini-cell.on {
+      background: #000000;
     }
 
     .page-title {
@@ -217,8 +246,11 @@
 
   <div class="wrapper" id="wrapper">
     <header class="page-header">
-      <h1 class="page-title">Flagg Independence Scale</h1>
-      <p class="page-description">Click or tap the option in each row that best describes your independence in that area.</p>
+      <div class="header-text">
+        <h1 class="page-title">Flagg Independence Scale</h1>
+        <p class="page-description">Click or tap the option in each row that best describes your independence in that area.</p>
+      </div>
+      <div class="mini-grid" id="mini-grid" aria-hidden="true"></div>
     </header>
     <div class="score" id="score">
       <span class="score-value" id="score-value">0</span> / 25 <span id="score-pct"></span>
@@ -373,6 +405,27 @@
       wrapper.insertBefore(category, scoreEl);
     });
 
+    // Build the mini grid (mirrors selections).
+    const miniGrid = document.getElementById('mini-grid');
+    const miniCells = [];
+    for (let r = 0; r < ROWS.length; r++) {
+      miniCells[r] = [];
+      for (let c = 0; c < COLS; c++) {
+        const m = document.createElement('div');
+        m.className = 'mini-cell';
+        miniGrid.appendChild(m);
+        miniCells[r][c] = m;
+      }
+    }
+
+    function syncMiniGrid() {
+      for (let r = 0; r < ROWS.length; r++) {
+        for (let c = 0; c < COLS; c++) {
+          miniCells[r][c].classList.toggle('on', selections[r] === c);
+        }
+      }
+    }
+
     const tooltipEl = document.getElementById('tooltip');
     const tooltipTitleEl = document.getElementById('tooltip-title');
     const tooltipDescEl = document.getElementById('tooltip-desc');
@@ -491,6 +544,7 @@
       scoreValueEl.textContent = total;
       scorePctEl.textContent = hasAny ? `(${Math.round(total / MAX_SCORE * 100)}%)` : '';
       scoreEl.classList.toggle('visible', hasAny);
+      syncMiniGrid();
     }
   </script>
 
