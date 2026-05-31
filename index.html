@@ -70,6 +70,7 @@
     }
 
     .cell {
+      position: relative;
       aspect-ratio: 2 / 1;
       border: 1.5px solid #c2b8ac;
       border-radius: 6px;
@@ -109,6 +110,48 @@
     .cell.selected:hover {
       border-color: #8c6248;
       background: #8c6248;
+    }
+
+    .info-btn {
+      position: absolute;
+      top: 3px;
+      right: 4px;
+      width: 19px;
+      height: 19px;
+      padding: 0;
+      border: none;
+      border-radius: 50%;
+      background: transparent;
+      color: #c2b8ac;
+      font-size: 14px;
+      line-height: 1;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      cursor: pointer;
+      transition: color 0.18s ease, transform 0.12s ease;
+      -webkit-tap-highlight-color: transparent;
+    }
+
+    .info-btn:hover {
+      color: #9e7055;
+    }
+
+    .info-btn:active {
+      transform: scale(0.85);
+    }
+
+    .info-btn:focus-visible {
+      outline: 2px solid #9e7055;
+      outline-offset: 1px;
+    }
+
+    .cell.selected .info-btn {
+      color: rgba(233, 226, 216, 0.75);
+    }
+
+    .cell.selected .info-btn:hover {
+      color: #fffaf2;
     }
 
     .cell-wrap {
@@ -340,10 +383,27 @@
         });
 
         const tipContent = { title: caption, desc };
-        cell.addEventListener('mouseenter', () => showTooltip(cell, tipContent));
-        cell.addEventListener('mouseleave', hideTooltip);
-        cell.addEventListener('focus', () => showTooltip(cell, tipContent));
-        cell.addEventListener('blur', hideTooltip);
+        cell.addEventListener('mouseenter', () => { if (!pinnedCell) showTooltip(cell, tipContent); });
+        cell.addEventListener('mouseleave', () => { if (!pinnedCell) hideTooltip(); });
+        cell.addEventListener('focus', () => { if (!pinnedCell) showTooltip(cell, tipContent); });
+        cell.addEventListener('blur', () => { if (!pinnedCell) hideTooltip(); });
+
+        const infoBtn = document.createElement('button');
+        infoBtn.className = 'info-btn';
+        infoBtn.type = 'button';
+        infoBtn.textContent = 'ⓘ';
+        infoBtn.setAttribute('aria-label', `More about ${caption}`);
+        infoBtn.addEventListener('click', (e) => {
+          e.stopPropagation();
+          if (pinnedCell === cell) {
+            pinnedCell = null;
+            hideTooltip();
+          } else {
+            pinnedCell = cell;
+            showTooltip(cell, tipContent);
+          }
+        });
+        cell.appendChild(infoBtn);
 
         const captionEl = document.createElement('div');
         captionEl.className = 'cell-caption';
@@ -362,6 +422,15 @@
     const tooltipTitleEl = document.getElementById('tooltip-title');
     const tooltipDescEl = document.getElementById('tooltip-desc');
     const tooltipArrowEl = document.getElementById('tooltip-arrow');
+    let pinnedCell = null;
+
+    // Dismiss a pinned tooltip when tapping/clicking anywhere outside its cell.
+    document.addEventListener('click', (e) => {
+      if (pinnedCell && !pinnedCell.contains(e.target)) {
+        pinnedCell = null;
+        hideTooltip();
+      }
+    });
 
     function showTooltip(cell, { title, desc }) {
       tooltipTitleEl.textContent = title;
