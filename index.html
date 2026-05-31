@@ -117,6 +117,52 @@
       gap: 0.4rem;
     }
 
+    .tooltip {
+      position: fixed;
+      z-index: 100;
+      width: max-content;
+      max-width: 240px;
+      background: #fffaf2;
+      color: #5f5142;
+      font-size: 0.82rem;
+      line-height: 1.5;
+      padding: 0.85rem 1rem;
+      border-radius: 16px;
+      box-shadow: 0 10px 30px rgba(120, 95, 65, 0.18);
+      pointer-events: none;
+      opacity: 0;
+      transform: translateY(8px) scale(0.95);
+      transform-origin: bottom center;
+      transition:
+        opacity 0.18s ease,
+        transform 0.26s cubic-bezier(0.34, 1.56, 0.64, 1);
+    }
+
+    .tooltip.visible {
+      opacity: 1;
+      transform: translateY(0) scale(1);
+    }
+
+    .tooltip.below {
+      transform-origin: top center;
+    }
+
+    .tooltip-title {
+      font-weight: 600;
+      color: #9e7055;
+      margin-bottom: 0.25rem;
+      letter-spacing: 0.01em;
+    }
+
+    .tooltip-arrow {
+      position: absolute;
+      width: 12px;
+      height: 12px;
+      background: #fffaf2;
+      transform: rotate(45deg);
+      border-radius: 2px;
+    }
+
     .cell-caption {
       font-size: 0.68rem;
       line-height: 1.25;
@@ -177,27 +223,65 @@
     <p class="copyright">© 2022 Nancy N. Flagg. All Rights Reserved.</p>
   </div>
 
+  <div class="tooltip" id="tooltip" role="tooltip" aria-hidden="true">
+    <div class="tooltip-arrow" id="tooltip-arrow"></div>
+    <div class="tooltip-title" id="tooltip-title"></div>
+    <div class="tooltip-desc" id="tooltip-desc"></div>
+  </div>
+
   <script>
+    const PLACEHOLDER = 'Placeholder description — more detail about what this option means will go here.';
+
     const ROWS = [
       {
         label: 'Shelter',
-        options: ['No Shelter', 'Shelter', 'Utility Equipped', 'Privacy', 'Stability'],
+        options: [
+          { label: 'No Shelter', desc: PLACEHOLDER },
+          { label: 'Shelter', desc: PLACEHOLDER },
+          { label: 'Utility Equipped', desc: PLACEHOLDER },
+          { label: 'Privacy', desc: PLACEHOLDER },
+          { label: 'Stability', desc: PLACEHOLDER },
+        ],
       },
       {
         label: 'Transportation',
-        options: ['No Transport', 'Public Transit', 'Control', 'Distance', 'Independence'],
+        options: [
+          { label: 'No Transport', desc: PLACEHOLDER },
+          { label: 'Public Transit', desc: PLACEHOLDER },
+          { label: 'Short Distance', desc: PLACEHOLDER },
+          { label: 'Long Distance', desc: PLACEHOLDER },
+          { label: 'Independence', desc: PLACEHOLDER },
+        ],
       },
       {
         label: 'Water and Food',
-        options: ['No Water', 'Clean Water', 'Some Food', 'Enough Food', 'Healthy Food'],
+        options: [
+          { label: 'No Water', desc: PLACEHOLDER },
+          { label: 'Clean Water', desc: PLACEHOLDER },
+          { label: 'Some Food', desc: PLACEHOLDER },
+          { label: 'Enough Food', desc: PLACEHOLDER },
+          { label: 'Healthy Food', desc: PLACEHOLDER },
+        ],
       },
       {
         label: 'Safety and Security',
-        options: ['Mortal Danger', 'Physical Danger', 'Dangerous Location', 'No Emergency Savings', 'Safety'],
+        options: [
+          { label: 'Mortal Danger', desc: PLACEHOLDER },
+          { label: 'Physical Danger', desc: PLACEHOLDER },
+          { label: 'Dangerous Location', desc: PLACEHOLDER },
+          { label: 'No Emergency Savings', desc: PLACEHOLDER },
+          { label: 'Safety', desc: PLACEHOLDER },
+        ],
       },
       {
         label: 'Health and Wellbeing',
-        options: ['No Emergency Access', 'Communication', 'Vital Medications', 'All Medications', 'Full Healthcare'],
+        options: [
+          { label: 'No Emergency Access', desc: PLACEHOLDER },
+          { label: 'Communication', desc: PLACEHOLDER },
+          { label: 'Vital Medications', desc: PLACEHOLDER },
+          { label: 'All Medications', desc: PLACEHOLDER },
+          { label: 'Full Healthcare', desc: PLACEHOLDER },
+        ],
       },
     ];
 
@@ -225,7 +309,7 @@
       cells.className = 'cells';
 
       for (let col = 0; col < COLS; col++) {
-        const caption = options[col] || '';
+        const { label: caption, desc } = options[col] || { label: '', desc: '' };
 
         const wrap = document.createElement('div');
         wrap.className = 'cell-wrap';
@@ -255,6 +339,12 @@
           }
         });
 
+        const tipContent = { title: caption, desc };
+        cell.addEventListener('mouseenter', () => showTooltip(cell, tipContent));
+        cell.addEventListener('mouseleave', hideTooltip);
+        cell.addEventListener('focus', () => showTooltip(cell, tipContent));
+        cell.addEventListener('blur', hideTooltip);
+
         const captionEl = document.createElement('div');
         captionEl.className = 'cell-caption';
         captionEl.textContent = caption;
@@ -267,6 +357,60 @@
       category.appendChild(cells);
       wrapper.insertBefore(category, scoreEl);
     });
+
+    const tooltipEl = document.getElementById('tooltip');
+    const tooltipTitleEl = document.getElementById('tooltip-title');
+    const tooltipDescEl = document.getElementById('tooltip-desc');
+    const tooltipArrowEl = document.getElementById('tooltip-arrow');
+
+    function showTooltip(cell, { title, desc }) {
+      tooltipTitleEl.textContent = title;
+      tooltipDescEl.textContent = desc;
+      tooltipEl.setAttribute('aria-hidden', 'false');
+
+      // Make measurable, then position.
+      tooltipEl.style.visibility = 'hidden';
+      tooltipEl.classList.add('visible');
+
+      const margin = 10;
+      const gap = 10;
+      const cellRect = cell.getBoundingClientRect();
+      const tipRect = tooltipEl.getBoundingClientRect();
+      const vw = document.documentElement.clientWidth;
+
+      // Horizontal: centre over the cell, clamped to viewport.
+      let left = cellRect.left + cellRect.width / 2 - tipRect.width / 2;
+      left = Math.max(margin, Math.min(left, vw - tipRect.width - margin));
+
+      // Vertical: prefer above; flip below if not enough room.
+      const placeBelow = cellRect.top - tipRect.height - gap < margin;
+      const top = placeBelow
+        ? cellRect.bottom + gap
+        : cellRect.top - tipRect.height - gap;
+
+      tooltipEl.classList.toggle('below', placeBelow);
+
+      // Arrow points at the cell centre, clamped to the tooltip body.
+      const arrowX = cellRect.left + cellRect.width / 2 - left;
+      const clampedArrowX = Math.max(14, Math.min(arrowX, tipRect.width - 14));
+      tooltipArrowEl.style.left = `${clampedArrowX - 6}px`;
+      if (placeBelow) {
+        tooltipArrowEl.style.top = '-6px';
+        tooltipArrowEl.style.bottom = '';
+      } else {
+        tooltipArrowEl.style.top = '';
+        tooltipArrowEl.style.bottom = '-6px';
+      }
+
+      tooltipEl.style.left = `${left}px`;
+      tooltipEl.style.top = `${top}px`;
+      tooltipEl.style.visibility = '';
+    }
+
+    function hideTooltip() {
+      tooltipEl.classList.remove('visible');
+      tooltipEl.setAttribute('aria-hidden', 'true');
+    }
 
     function getCell(rowIdx, colIdx) {
       return wrapper.querySelector(`[data-row="${rowIdx}"][data-col="${colIdx}"]`);
