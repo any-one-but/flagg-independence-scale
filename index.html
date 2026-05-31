@@ -4,9 +4,6 @@
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
   <title>Assessment</title>
-  <link rel="preconnect" href="https://fonts.googleapis.com">
-  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
-  <link href="https://fonts.googleapis.com/css2?family=EB+Garamond:wght@400&display=swap" rel="stylesheet">
   <style>
     *, *::before, *::after {
       box-sizing: border-box;
@@ -112,19 +109,6 @@
     .cell.selected:hover {
       border-color: #8c6248;
       background: #8c6248;
-    }
-
-    .cell-number {
-      font-family: 'EB Garamond', Georgia, serif;
-      font-size: 1.3rem;
-      color: #c8723a;
-      transition: color 0.18s ease;
-      line-height: 1;
-      user-select: none;
-    }
-
-    .cell.selected .cell-number {
-      color: #e9e2d8;
     }
 
     .cell-wrap {
@@ -254,11 +238,6 @@
         cell.setAttribute('tabindex', col === 0 ? '0' : '-1');
         cell.dataset.row = rowIdx;
         cell.dataset.col = col;
-
-        const numEl = document.createElement('span');
-        numEl.className = 'cell-number';
-        numEl.textContent = col + 1;
-        cell.appendChild(numEl);
 
         cell.addEventListener('click', () => handleSelect(rowIdx, col));
         cell.addEventListener('keydown', (e) => {
