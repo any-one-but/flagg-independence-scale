@@ -326,6 +326,7 @@
         cell.addEventListener('click', () => {
           handleSelect(rowIdx, col);
           pinnedCell = cell;
+          pinnedContent = tipContent;
           showTooltip(cell, tipContent);
         });
         cell.addEventListener('keydown', (e) => {
@@ -344,10 +345,10 @@
         });
 
         const tipContent = { title: caption, desc };
-        cell.addEventListener('mouseenter', () => { if (!pinnedCell) showTooltip(cell, tipContent); });
-        cell.addEventListener('mouseleave', () => { if (!pinnedCell) hideTooltip(); });
-        cell.addEventListener('focus', () => { if (!pinnedCell) showTooltip(cell, tipContent); });
-        cell.addEventListener('blur', () => { if (!pinnedCell) hideTooltip(); });
+        cell.addEventListener('mouseenter', () => showTooltip(cell, tipContent));
+        cell.addEventListener('mouseleave', restoreOrHide);
+        cell.addEventListener('focus', () => showTooltip(cell, tipContent));
+        cell.addEventListener('blur', restoreOrHide);
 
         const captionEl = document.createElement('div');
         captionEl.className = 'cell-caption';
@@ -367,11 +368,19 @@
     const tooltipDescEl = document.getElementById('tooltip-desc');
     const tooltipArrowEl = document.getElementById('tooltip-arrow');
     let pinnedCell = null;
+    let pinnedContent = null;
+
+    // When a hover/focus ends, fall back to the pinned tooltip (if any) or hide.
+    function restoreOrHide() {
+      if (pinnedCell) showTooltip(pinnedCell, pinnedContent);
+      else hideTooltip();
+    }
 
     // Dismiss a pinned tooltip when tapping/clicking anywhere outside its cell.
     document.addEventListener('click', (e) => {
       if (pinnedCell && !pinnedCell.contains(e.target)) {
         pinnedCell = null;
+        pinnedContent = null;
         hideTooltip();
       }
     });
