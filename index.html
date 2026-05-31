@@ -292,6 +292,9 @@
     const MAX_SCORE = 25;
     const selections = {};
 
+    // Hover/click description popups. Set to true to re-enable.
+    const TOOLTIPS_ENABLED = false;
+
     const wrapper = document.getElementById('wrapper');
     const scoreEl = document.getElementById('score');
     const scoreValueEl = document.getElementById('score-value');
@@ -328,9 +331,11 @@
 
         cell.addEventListener('click', () => {
           handleSelect(rowIdx, col);
-          pinnedCell = cell;
-          pinnedContent = tipContent;
-          showTooltip(cell, tipContent);
+          if (TOOLTIPS_ENABLED) {
+            pinnedCell = cell;
+            pinnedContent = tipContent;
+            showTooltip(cell, tipContent);
+          }
         });
         cell.addEventListener('keydown', (e) => {
           if (e.key === 'Enter' || e.key === ' ') {
@@ -348,10 +353,12 @@
         });
 
         const tipContent = { title: caption, desc };
-        cell.addEventListener('mouseenter', () => showTooltip(cell, tipContent));
-        cell.addEventListener('mouseleave', restoreOrHide);
-        cell.addEventListener('focus', () => showTooltip(cell, tipContent));
-        cell.addEventListener('blur', restoreOrHide);
+        if (TOOLTIPS_ENABLED) {
+          cell.addEventListener('mouseenter', () => showTooltip(cell, tipContent));
+          cell.addEventListener('mouseleave', restoreOrHide);
+          cell.addEventListener('focus', () => showTooltip(cell, tipContent));
+          cell.addEventListener('blur', restoreOrHide);
+        }
 
         const captionEl = document.createElement('div');
         captionEl.className = 'cell-caption';
@@ -380,13 +387,15 @@
     }
 
     // Dismiss a pinned tooltip when tapping/clicking anywhere outside its cell.
-    document.addEventListener('click', (e) => {
-      if (pinnedCell && !pinnedCell.contains(e.target)) {
-        pinnedCell = null;
-        pinnedContent = null;
-        hideTooltip();
-      }
-    });
+    if (TOOLTIPS_ENABLED) {
+      document.addEventListener('click', (e) => {
+        if (pinnedCell && !pinnedCell.contains(e.target)) {
+          pinnedCell = null;
+          pinnedContent = null;
+          hideTooltip();
+        }
+      });
+    }
 
     function showTooltip(cell, { title, desc }) {
       tooltipTitleEl.textContent = title;
